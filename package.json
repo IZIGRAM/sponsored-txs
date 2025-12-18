@@ -1,0 +1,26 @@
+{
+	"name": "sponsored_tx",
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"build": "hardhat compile",
+		"compile": "hardhat compile",
+		"test": "hardhat test",
+		"clean": "rimraf artifacts cache typechain-types"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"devDependencies": {
+		"@nomicfoundation/hardhat-toolbox": "^6.1.0",
+		"hardhat": "^2.28.0",
+		"rimraf": "^6.1.2",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@account-abstraction/contracts": "^0.8.0",
+		"@openzeppelin/contracts": "^5.4.0"
+	}
+}
