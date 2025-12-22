@@ -39,7 +39,14 @@ contract SponsoredAccount is BaseAccount, Ownable2Step {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
     ) internal override returns (uint256 validationData) {
-        if (owner() != ECDSA.recover(userOpHash, userOp.signature)) {
+        // We allow extra data appended to userOp.signature (e.g. a paymaster/sponsor signature).
+        // The first 65 bytes must be the owner's ECDSA signature.
+        if (userOp.signature.length < 65) {
+            return SIG_VALIDATION_FAILED;
+        }
+
+        bytes memory ownerSig = userOp.signature[:65];
+        if (owner() != ECDSA.recover(userOpHash, ownerSig)) {
             return SIG_VALIDATION_FAILED;
         }
         return SIG_VALIDATION_SUCCESS;
