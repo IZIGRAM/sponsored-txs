@@ -46,7 +46,8 @@ contract SponsoredAccount is BaseAccount, Ownable2Step {
         }
 
         bytes memory ownerSig = userOp.signature[:65];
-        if (owner() != ECDSA.recover(userOpHash, ownerSig)) {
+        (address recovered, ECDSA.RecoverError err,) = ECDSA.tryRecover(userOpHash, ownerSig);
+        if (err != ECDSA.RecoverError.NoError || recovered != owner()) {
             return SIG_VALIDATION_FAILED;
         }
         return SIG_VALIDATION_SUCCESS;

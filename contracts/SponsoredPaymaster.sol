@@ -70,7 +70,8 @@ contract SponsoredPaymaster is BasePaymaster {
         bytes memory sponsorSig = userOp.signature[65:];
 
         bytes32 digest = getSponsorHash(userOpHash, validUntil, validAfter).toEthSignedMessageHash();
-        bool sigFailed = ECDSA.recover(digest, sponsorSig) != verifyingSigner;
+        (address recovered, ECDSA.RecoverError err,) = ECDSA.tryRecover(digest, sponsorSig);
+        bool sigFailed = err != ECDSA.RecoverError.NoError || recovered != verifyingSigner;
 
         validationData = _packValidationData(sigFailed, validUntil, validAfter);
         context = "";
