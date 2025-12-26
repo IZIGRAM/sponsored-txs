@@ -48,4 +48,44 @@ contract SponsoredAccount is BaseAccount, Ownable2Step {
     return SIG_VALIDATION_SUCCESS;
 }
 
+function execute(
+    address dest,
+    uint256 value,
+    bytes calldata func
+) external {
+    _requireFromEntryPointOrOwner();
+
+    (bool success, bytes memory result) =
+        dest.call{value: value}(func);
+
+    require(success, "execute failed");
+}
+
+function executeBatch(
+    address[] calldata dest,
+    uint256[] calldata value,
+    bytes[] calldata func
+) external {
+    _requireFromEntryPointOrOwner();
+
+    require(
+        dest.length == value.length && dest.length == func.length,
+        "length mismatch"
+    );
+
+    for (uint256 i = 0; i < dest.length; i++) {
+        (bool success, ) =
+            dest[i].call{value: value[i]}(func[i]);
+        require(success, "executeBatch failed");
+    }
+}
+
+function _requireFromEntryPointOrOwner() internal view {
+    require(
+        msg.sender == address(entryPoint()) || msg.sender == owner(),
+        "not authorized"
+    );
+}
+
+
 }
