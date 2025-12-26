@@ -1,26 +1,23 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import "@openzeppelin/contracts/access/Ownable.sol"; // чтобы вызвать Ownable(initialOwner)
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "@account-abstraction/contracts/core/BaseAccount.sol";
-import "@account-abstraction/contracts/core/Helpers.sol";
+import "@account-abstraction/contracts/core/Helpers.sol"; // SIG_VALIDATION_*
+import "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import "@account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-/**
- * Minimal ERC-4337 smart account for EntryPoint v0.7 (PackedUserOperation).
- *
- * - Owner can execute directly, or via EntryPoint during UserOp execution.
- * - Signature check expects EIP-712 signature over `userOpHash` (same behavior as SimpleAccount).
- */
 contract SponsoredAccount is BaseAccount, Ownable2Step {
     using ECDSA for bytes32;
 
-    IEntryPoint private immutable _entryPoint;
+    IEntryPoint private immutable _entryPoint =
+        IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
 
-    constructor(IEntryPoint anEntryPoint, address initialOwner) Ownable(initialOwner) {
-        _entryPoint = anEntryPoint;
-    }
+    // Ownable2Step наследуется от Ownable, поэтому вызываем конструктор Ownable
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     function entryPoint() public view override returns (IEntryPoint) {
         return _entryPoint;
@@ -28,40 +25,27 @@ contract SponsoredAccount is BaseAccount, Ownable2Step {
 
     receive() external payable {}
 
-    function _requireForExecute() internal view override {
-        require(
-            msg.sender == address(entryPoint()) || msg.sender == owner(),
-            "account: not Owner or EntryPoint"
-        );
+   function _validateSignature(
+    PackedUserOperation calldata userOp,
+    bytes32 userOpHash
+) internal override returns (uint256) {
+    if (userOp.signature.length < 65) {
+        return SIG_VALIDATION_FAILED;
     }
 
-    function _validateSignature(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    ) internal override returns (uint256 validationData) {
-        // We allow extra data appended to userOp.signature (e.g. a paymaster/sponsor signature).
-        // The first 65 bytes must be the owner's ECDSA signature.
-        if (userOp.signature.length < 65) {
-            return SIG_VALIDATION_FAILED;
-        }
-
-        bytes memory ownerSig = userOp.signature[:65];
-        (address recovered, ECDSA.RecoverError err,) = ECDSA.tryRecover(userOpHash, ownerSig);
-        if (err != ECDSA.RecoverError.NoError || recovered != owner()) {
-            return SIG_VALIDATION_FAILED;
-        }
-        return SIG_VALIDATION_SUCCESS;
+    bytes memory sig = new bytes(65);
+    for (uint256 i = 0; i < 65; i++) {
+        sig[i] = userOp.signature[i];
     }
 
-    function getDeposit() external view returns (uint256) {
-        return entryPoint().balanceOf(address(this));
+    (address recovered, ECDSA.RecoverError err, ) =
+        ECDSA.tryRecover(userOpHash, sig);
+
+    if (err != ECDSA.RecoverError.NoError || recovered != owner()) {
+        return SIG_VALIDATION_FAILED;
     }
 
-    function addDeposit() external payable {
-        entryPoint().depositTo{value: msg.value}(address(this));
-    }
+    return SIG_VALIDATION_SUCCESS;
+}
 
-    function withdrawDepositTo(address payable withdrawAddress, uint256 amount) external onlyOwner {
-        entryPoint().withdrawTo(withdrawAddress, amount);
-    }
 }
