@@ -6,10 +6,11 @@
 		"build": "hardhat compile",
 		"compile": "hardhat compile",
 		"test": "hardhat test",
-		"clean": "rimraf artifacts cache typechain-types"
+		"clean": "rimraf artifacts cache typechain-types",
+		"deploy-sepolia": "npx hardhat run scripts/deploy.ts --network sepolia"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "cryptosapienss",
 	"license": "ISC",
 	"description": "",
 	"devDependencies": {

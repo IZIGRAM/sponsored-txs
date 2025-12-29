@@ -23,7 +23,7 @@ contract SponsoredAccountFactory {
             return SponsoredAccount(payable(predicted));
         }
 
-        account = new SponsoredAccount{salt: bytes32(salt)}(entryPoint, owner);
+        account = new SponsoredAccount{salt: bytes32(salt)}(owner);
         emit AccountCreated(address(account), owner, salt);
     }
 

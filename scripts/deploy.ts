@@ -19,12 +19,19 @@ async function main() {
 
 	const verifyingSigner = process.env.VERIFYING_SIGNER ?? deployer.address;
 
+	console.log("Deploying SponsoredPaymaster...");
 	const Paymaster = await ethers.getContractFactory("SponsoredPaymaster");
 	const paymaster = await Paymaster.deploy(entryPointAddress, verifyingSigner);
-	await paymaster.waitForDeployment();
 
+	console.log("Waiting for SponsoredPaymaster deployment...");
+	await paymaster.waitForDeployment();
+	console.log("SponsoredPaymaster deployed at:", await paymaster.getAddress());
+
+	console.log("Deploying SponsoredAccountFactory...");
 	const Factory = await ethers.getContractFactory("SponsoredAccountFactory");
 	const factory = await Factory.deploy(entryPointAddress);
+
+	console.log("Waiting for SponsoredAccountFactory deployment...");
 	await factory.waitForDeployment();
 
 	console.log("Deployer:", deployer.address);
