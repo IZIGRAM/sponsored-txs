@@ -30,7 +30,7 @@ contract SponsoredAccountFactory {
     function getAddress(address owner, uint256 salt) public view returns (address) {
         bytes memory initCode = abi.encodePacked(
             type(SponsoredAccount).creationCode,
-            abi.encode(entryPoint, owner)
+            abi.encode(owner)
         );
 
         bytes32 initCodeHash = keccak256(initCode);
